@@ -163,21 +163,11 @@
             for (const [deviceId, info] of Object.entries(data)) {
                 submitData.devices[deviceId] = { status: info.status, description: info.description || '' };
             }
-            fetch('/api/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                body: JSON.stringify(submitData)
-            })
-            .then(res => res.json())
-            .then(result => {
-                if (result.success) {
-                    const report = generateReport(submitData);
-                    document.getElementById('reportContent').innerText = report;
-                    document.getElementById('successModal').classList.add('show');
-                } else { alert('提交失败：' + (result.message || '未知错误')); }
-            })
-            .catch(err => { alert('提交失败：' + err.message); });
-        }
+                        // 直接在浏览器生成总结（GitHub Pages 不支持后端 API）
+            const report = generateReport(submitData);
+            document.getElementById('reportContent').innerText = report;
+            document.getElementById('successModal').classList.add('show');
+
 
         function closeModal() {
             document.getElementById('successModal').classList.remove('show');
