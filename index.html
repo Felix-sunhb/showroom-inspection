@@ -238,7 +238,7 @@
         // Supabase 配置
         const SUPABASE_URL = 'https://gtoqmmzsshwqdhppkgg.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_h3Thb_PYT_RcNIgvEuLXsg_DrKQPOTo';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 设备配置
         const devices = {
@@ -356,7 +356,7 @@
 
             try {
                 // 1. 插入巡检记录
-                const { data: inspection, error: inspectionError } = await supabase
+                const { data: inspection, error: inspectionError } = await supabaseClient
                     .from('inspections')
                     .insert({
                         date: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`,
@@ -384,7 +384,7 @@
                     });
                 }
 
-                const { error: checksError } = await supabase
+                const { error: checksError } = await supabaseClient
                     .from('device_checks')
                     .insert(deviceChecks);
 
