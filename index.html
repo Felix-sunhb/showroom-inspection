@@ -31,12 +31,11 @@
         .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
         .success-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
         .success-modal.show { display: flex; }
-        .success-content { background: white; border-radius: 16px; padding: 32px; text-align: center; max-width: 300px; }
+        .success-content { background: white; border-radius: 16px; padding: 32px; text-align: center; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto; }
         .success-icon { font-size: 48px; margin-bottom: 16px; }
         .success-text { font-size: 18px; color: #333; margin-bottom: 20px; }
-        .success-btn { padding: 10px 32px; background: #1890ff; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
-        .summary-box { display: none; margin-top: 16px; padding: 16px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 8px; }
-        .summary-box.show { display: block; }
+        .success-btn { padding: 10px 32px; background: #1890ff; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 16px; }
+        .summary-box { margin: 16px 0; padding: 16px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 8px; text-align: left; }
         .summary-box pre { white-space: pre-wrap; font-size: 13px; color: #333; }
         .copy-btn { margin-top: 12px; padding: 8px 20px; background: #52c41a; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
         .copy-btn:active { background: #389e0d; }
@@ -57,22 +56,21 @@
 
     <button class="submit-btn" onclick="submitInspection()">提交巡检结果</button>
 
-    <div class="summary-box" id="summaryBox">
-        <div class="section-title">巡检总结</div>
-        <pre id="summaryText"></pre>
-        <button class="copy-btn" onclick="copySummary()">复制总结</button>
-    </div>
-
     <div class="success-modal" id="successModal">
         <div class="success-content">
             <div class="success-icon">✅</div>
             <div class="success-text">巡检结果已提交</div>
+            <div class="summary-box" id="summaryBox">
+                <div class="section-title">巡检总结</div>
+                <pre id="summaryText"></pre>
+            </div>
+            <button class="copy-btn" onclick="copySummary()">复制总结</button>
+            <br>
             <button class="success-btn" onclick="closeModal()">确定</button>
         </div>
     </div>
 
     <script>
-        // 设备配置
         const devices = {
             "屏幕": ["机械臂屏幕", "全球化屏幕", "魔方屏幕", "研发屏幕", "七大业务板块屏幕", "解决方案屏幕", "mini 产线屏幕", "堆垛机屏幕"],
             "机器人": ["机器人产品"],
@@ -152,14 +150,12 @@
                 devices: data
             };
 
-            // 保存到 localStorage
             let records = JSON.parse(localStorage.getItem('inspectionRecords') || '[]');
             records.push(record);
             localStorage.setItem('inspectionRecords', JSON.stringify(records));
 
             const summary = generateSummary(now, inspector, data);
             document.getElementById('summaryText').textContent = summary;
-            document.getElementById('summaryBox').classList.add('show');
             document.getElementById('successModal').classList.add('show');
         }
 
@@ -197,7 +193,6 @@
             document.querySelectorAll('.btn').forEach(b => b.classList.remove('selected'));
             document.querySelectorAll('.error-input').forEach(d => d.classList.remove('show'));
             document.querySelectorAll('textarea').forEach(t => t.value = '');
-            document.getElementById('summaryBox').classList.remove('show');
         }
 
         init();
