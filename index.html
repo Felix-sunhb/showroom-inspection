@@ -285,7 +285,7 @@
                 html += `<div class="section-title">${category}</div>`;
                 
                 for (const item of items) {
-                    const deviceId = `${category}_${item}`.replace(/\s/g, '_');
+                    const deviceId = `${category}_${item}`.replace(/[\s\\\/]/g, '_');
                     html += `
                         <div class="device-row">
                             <div class="device-name">${item}</div>
