@@ -31,14 +31,10 @@
         .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
         .success-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
         .success-modal.show { display: flex; }
-        .success-content { background: white; border-radius: 16px; padding: 32px; text-align: center; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .success-content { background: white; border-radius: 16px; padding: 32px; text-align: center; max-width: 300px; }
         .success-icon { font-size: 48px; margin-bottom: 16px; }
         .success-text { font-size: 18px; color: #333; margin-bottom: 20px; }
-        .success-btn { padding: 10px 32px; background: #1890ff; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 16px; }
-        .summary-box { margin: 16px 0; padding: 16px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 8px; text-align: left; }
-        .summary-box pre { white-space: pre-wrap; font-size: 13px; color: #333; }
-        .copy-btn { margin-top: 12px; padding: 8px 20px; background: #52c41a; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
-        .copy-btn:active { background: #389e0d; }
+        .success-btn { padding: 10px 32px; background: #1890ff; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -57,142 +53,145 @@
     <button class="submit-btn" onclick="submitInspection()">提交巡检结果</button>
 
     <div class="success-modal" id="successModal">
-        <div class="success-content">
-            <div class="success-icon">✅</div>
+        <div class="success-content" style="max-width:400px;max-height:80vh;overflow-y:auto;padding:24px;">
+            <div class="success-icon">&#10004;</div>
             <div class="success-text">巡检结果已提交</div>
-            <div class="summary-box" id="summaryBox">
-                <div class="section-title">巡检总结</div>
-                <pre id="summaryText"></pre>
-            </div>
-            <button class="copy-btn" onclick="copySummary()">复制总结</button>
-            <br>
-            <button class="success-btn" onclick="closeModal()">确定</button>
+            <div id="reportContent" style="text-align:left;font-size:13px;line-height:1.6;background:#f9f9f9;padding:12px;border-radius:8px;margin-bottom:16px;white-space:pre-wrap;"></div>
+            <button class="success-btn" onclick="copyReport()">复制总结</button>
+            <button class="success-btn" style="background:#52c41a;margin-left:8px;" onclick="closeModal()">确定</button>
         </div>
     </div>
 
     <script>
-        const devices = {
-            "屏幕": ["机械臂屏幕", "全球化屏幕", "魔方屏幕", "研发屏幕", "七大业务板块屏幕", "解决方案屏幕", "mini 产线屏幕", "堆垛机屏幕"],
+        var devices = {
+            "屏幕": ["机械臂屏幕", "全球化屏幕", "魔方屏幕", "研发屏幕", "七大业务板块屏幕", "解决方案屏幕", "mini产线屏幕", "堆垛机屏幕"],
             "机器人": ["机器人产品"],
             "家电": ["家电产品"],
             "楼宇产品": ["楼宇产品"],
             "医疗产品": ["医疗产品"],
             "自动化产线": ["自动化产线"],
-            "AGV\\堆垛机": ["AGV\\堆垛机"]
+            "AGV": ["AGV堆垛机"]
         };
 
-        const contacts = {
+        var contacts = {
             "屏幕": "钟震 15813813807 / 李彬 13802246609",
             "机器人": "郭永康 13128717140 / 陈铭章 18318893408",
             "家电": "-",
             "楼宇产品": "罗洁 13580121580",
             "医疗产品": "赵工（微信）",
             "自动化产线": "戴剑锋 18576083486",
-            "AGV\\堆垛机": "刘泽均 13728578770"
+            "AGV": "刘泽均 13728578770"
         };
 
         function init() {
-            const now = new Date();
-            document.getElementById('currentDate').textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
-
-            const container = document.getElementById('deviceList');
-            let html = '';
-            for (const [category, items] of Object.entries(devices)) {
-                html += `<div class="section"><div class="section-title">${category}</div>`;
-                for (const item of items) {
-                    const deviceId = `${category}_${item}`.replace(/[\s\\\/]/g, '_');
-                    html += `<div class="device-row"><div class="device-name">${item}</div><div class="btn-group">
-                        <button class="btn btn-normal" onclick="setStatus('${deviceId}', 'normal', this)">正常</button>
-                        <button class="btn btn-error" onclick="setStatus('${deviceId}', 'error', this)">异常</button>
-                    </div></div>
-                    <div class="error-input" id="input_${deviceId}">
-                        <textarea placeholder="请输入异常情况描述..." id="desc_${deviceId}"></textarea>
-                    </div>`;
+            var now = new Date();
+            var dateStr = now.getFullYear() + "年" + (now.getMonth()+1) + "月" + now.getDate() + "日";
+            document.getElementById('currentDate').textContent = dateStr;
+            var container = document.getElementById('deviceList');
+            var html = '';
+            for (var category in devices) {
+                var items = devices[category];
+                html += '<div class="section"><div class="section-title">' + category + '</div>';
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    var deviceId = (category + '_' + item).replace(/\s/g, '_');
+                    html += '<div class="device-row"><div class="device-name">' + item + '</div><div class="btn-group"><button class="btn btn-normal" onclick="setStatus(\'' + deviceId + '\', \'normal\', this)">正常</button><button class="btn btn-error" onclick="setStatus(\'' + deviceId + '\', \'error\', this)">异常</button></div></div><div class="error-input" id="input_' + deviceId + '"><textarea placeholder="请输入异常情况描述..." id="desc_' + deviceId + '"></textarea></div>';
                 }
-                html += `</div>`;
+                html += '</div>';
             }
             container.innerHTML = html;
         }
 
         function setStatus(deviceId, status, btn) {
-            const btnGroup = btn.parentElement;
-            btnGroup.querySelectorAll('.btn').forEach(b => b.classList.remove('selected'));
+            var btnGroup = btn.parentElement;
+            var btns = btnGroup.querySelectorAll('.btn');
+            for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('selected'); }
             btn.classList.add('selected');
             if (!window.inspectionData) window.inspectionData = {};
             window.inspectionData[deviceId] = { status: status };
-            const inputDiv = document.getElementById(`input_${deviceId}`);
-            inputDiv.classList.toggle('show', status === 'error');
+            var inputDiv = document.getElementById('input_' + deviceId);
+            if (status === 'error') { inputDiv.classList.add('show'); } else { inputDiv.classList.remove('show'); }
+        }
+
+        function generateReport(data) {
+            var devs = data.devices;
+            var total = 0, normal = 0, error = 0;
+            var errorItems = [];
+            for (var deviceId in devs) {
+                var info = devs[deviceId];
+                total++;
+                var parts = deviceId.split('_');
+                var category = parts[0];
+                var name = parts.slice(1).join('_');
+                if (info.status === 'normal') { normal++; } else {
+                    error++;
+                    errorItems.push({ category: category, name: name, description: info.description || '', contact: contacts[category] || '-' });
+                }
+            }
+            var report = '📋 展厅晨检报表\n';
+            report += '📅 ' + data.date + ' ' + data.time + '\n';
+            report += '👤 巡检员：' + data.inspector + '\n\n';
+            if (error === 0) {
+                report += '✅ 全部正常（' + total + '个设备）';
+            } else {
+                report += '📊 设备状态：正常 ' + normal + ' / 异常 ' + error + '\n\n';
+                report += '⚠️ 异常设备：\n';
+                for (var i = 0; i < errorItems.length; i++) {
+                    var item = errorItems[i];
+                    report += '\n【' + item.name + '】\n';
+                    report += '  异常描述：' + item.description + '\n';
+                    report += '  联系人：' + item.contact + '\n';
+                }
+            }
+            return report;
+        }
+
+        function copyReport() {
+            var report = document.getElementById('reportContent').innerText;
+            navigator.clipboard.writeText(report).then(function() { alert('已复制到剪贴板'); }).catch(function() { alert('复制失败，请手动选择复制'); });
         }
 
         function submitInspection() {
-            const data = window.inspectionData || {};
-            const totalDevices = Object.values(devices).flat().length;
-            if (Object.keys(data).length < totalDevices) {
-                alert(`还有 ${totalDevices - Object.keys(data).length} 个设备未检查`);
-                return;
-            }
-            for (const [deviceId, info] of Object.entries(data)) {
+            var data = window.inspectionData || {};
+            var totalDevices = 0;
+            for (var cat in devices) { totalDevices += devices[cat].length; }
+            var checkedDevices = Object.keys(data).length;
+            if (checkedDevices < totalDevices) { alert('还有 ' + (totalDevices - checkedDevices) + ' 个设备未检查'); return; }
+            for (var deviceId in data) {
+                var info = data[deviceId];
                 if (info.status === 'error') {
-                    const desc = document.getElementById(`desc_${deviceId}`).value.trim();
+                    var desc = document.getElementById('desc_' + deviceId).value.trim();
                     if (!desc) { alert('请填写所有异常设备的描述'); return; }
                     info.description = desc;
                 }
             }
-            const inspector = document.getElementById('inspectorInput').value.trim();
+            var now = new Date();
+            var inspector = document.getElementById('inspectorInput').value.trim();
             if (!inspector) { alert('请输入巡检员姓名'); return; }
-
-            const now = new Date();
-            const record = {
-                id: Date.now(),
-                date: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`,
-                time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+            var submitData = {
+                date: now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'),
+                time: String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0'),
                 inspector: inspector,
-                devices: data
+                devices: {}
             };
-
-            let records = JSON.parse(localStorage.getItem('inspectionRecords') || '[]');
-            records.push(record);
-            localStorage.setItem('inspectionRecords', JSON.stringify(records));
-
-            const summary = generateSummary(now, inspector, data);
-            document.getElementById('summaryText').textContent = summary;
-            document.getElementById('successModal').classList.add('show');
-        }
-
-        function generateSummary(now, inspector, data) {
-            const dateStr = `${now.getMonth()+1}月${now.getDate()}日`;
-            const totalDevices = Object.values(devices).flat().length;
-            const errorDevices = Object.entries(data).filter(([_, info]) => info.status === 'error');
-            const normalCount = totalDevices - errorDevices.length;
-
-            if (errorDevices.length === 0) {
-                return `${dateStr}晨检，${totalDevices}个设备全部正常 ✅\n巡检员：${inspector}`;
+            for (var deviceId in data) {
+                submitData.devices[deviceId] = { status: data[deviceId].status, description: data[deviceId].description || '' };
             }
-
-            let summary = `📋 ${dateStr}晨检报告\n━━━━━━━━━━━━━━\n📊 汇总：正常${normalCount}/异常${errorDevices.length}\n\n❌ 异常设备：\n`;
-            errorDevices.forEach(([deviceId, info], index) => {
-                const parts = deviceId.split('_');
-                const name = parts.slice(1).join('_').replace(/_/g, ' ');
-                const category = parts[0];
-                summary += `${index + 1}. ${name}\n   - 问题：${info.description}\n   - 售后：${contacts[category]}\n\n`;
-            });
-            summary += `━━━━━━━━━━━━━━\n✅ 正常设备：${normalCount}个\n巡检员：${inspector}`;
-            return summary;
-        }
-
-        function copySummary() {
-            navigator.clipboard.writeText(document.getElementById('summaryText').textContent)
-                .then(() => alert('已复制到剪贴板'))
-                .catch(() => alert('复制失败，请手动复制'));
+            var report = generateReport(submitData);
+            document.getElementById('reportContent').innerText = report;
+            document.getElementById('successModal').classList.add('show');
         }
 
         function closeModal() {
             document.getElementById('successModal').classList.remove('show');
             window.inspectionData = {};
             document.getElementById('inspectorInput').value = '';
-            document.querySelectorAll('.btn').forEach(b => b.classList.remove('selected'));
-            document.querySelectorAll('.error-input').forEach(d => d.classList.remove('show'));
-            document.querySelectorAll('textarea').forEach(t => t.value = '');
+            var btns = document.querySelectorAll('.btn');
+            for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('selected'); }
+            var divs = document.querySelectorAll('.error-input');
+            for (var i = 0; i < divs.length; i++) { divs[i].classList.remove('show'); }
+            var texts = document.querySelectorAll('textarea');
+            for (var i = 0; i < texts.length; i++) { texts[i].value = ''; }
         }
 
         init();
