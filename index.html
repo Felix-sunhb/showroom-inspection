@@ -1,200 +1,318 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>展厅晨检</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; padding: 16px; min-height: 100vh; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { font-size: 20px; color: #333; margin-bottom: 4px; }
-        .header .date { font-size: 14px; color: #666; }
-        .section { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .section-title { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
-        .device-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-        .device-row:last-child { border-bottom: none; }
-        .device-name { font-size: 14px; color: #333; flex: 1; }
-        .btn-group { display: flex; gap: 8px; }
-        .btn { padding: 6px 16px; border-radius: 20px; font-size: 13px; border: 1px solid #ddd; background: white; cursor: pointer; transition: all 0.2s; }
-        .btn:active { transform: scale(0.95); }
-        .btn-normal { color: #52c41a; border-color: #52c41a; }
-        .btn-normal.selected { background: #52c41a; color: white; }
-        .btn-error { color: #ff4d4f; border-color: #ff4d4f; }
-        .btn-error.selected { background: #ff4d4f; color: white; }
-        .error-input { display: none; margin-top: 8px; padding: 10px; background: #fff2f0; border-radius: 8px; }
-        .error-input.show { display: block; }
-        .error-input textarea { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 8px; font-size: 13px; resize: none; height: 60px; }
-        .error-input textarea:focus { outline: none; border-color: #1890ff; }
-        .submit-btn { width: 100%; padding: 14px; background: #1890ff; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; }
-        .submit-btn:active { background: #096dd9; }
-        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .success-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
-        .success-modal.show { display: flex; }
-        .success-content { background: white; border-radius: 16px; padding: 32px; text-align: center; max-width: 300px; }
-        .success-icon { font-size: 48px; margin-bottom: 16px; }
-        .success-text { font-size: 18px; color: #333; margin-bottom: 20px; }
-        .success-btn { padding: 10px 32px; background: #1890ff; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>展厅晨检</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:#f2f4f7; padding:12px; min-height:100vh; color:#1f2329; }
+  .header { text-align:center; margin-bottom:14px; }
+  .header h1 { font-size:19px; font-weight:600; }
+  .header .date { font-size:13px; color:#8a9099; margin-top:3px; }
+  .card { background:#fff; border-radius:10px; padding:14px; margin-bottom:10px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .card-title { font-size:15px; font-weight:600; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #eef0f3; display:flex; justify-content:space-between; align-items:center; }
+  .card-title .cnt { font-size:12px; font-weight:400; color:#8a9099; }
+  input[type=text] { width:100%; padding:11px 12px; border:1px solid #dfe2e7; border-radius:8px; font-size:15px; outline:none; }
+  input[type=text]:focus { border-color:#0066ff; }
+  .row { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid #f4f5f7; }
+  .row:last-child { border-bottom:none; padding-bottom:0; }
+  .row:first-of-type { padding-top:0; }
+  .name { font-size:14px; flex:1; padding-right:8px; }
+  .btns { display:flex; gap:6px; flex-shrink:0; }
+  .btn { padding:7px 14px; border-radius:16px; font-size:13px; border:1px solid #dfe2e7; background:#fff; cursor:pointer; color:#5a6270; transition:.15s; }
+  .btn.ok.on { background:#00b42a; border-color:#00b42a; color:#fff; }
+  .btn.no.on { background:#f53f3f; border-color:#f53f3f; color:#fff; }
+  .desc { display:none; padding:8px 0 10px; }
+  .desc.show { display:block; }
+  .desc textarea { width:100%; border:1px solid #ffcdc9; background:#fff7f6; border-radius:8px; padding:9px 10px; font-size:13px; resize:none; height:56px; outline:none; font-family:inherit; }
+  .desc textarea:focus { border-color:#f53f3f; }
+  .submit { width:100%; padding:14px; background:#0066ff; color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; margin-top:4px; }
+  .submit:active { background:#0052cc; }
+  .submit:disabled { background:#c9cdd4; }
+  .mask { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:99; align-items:center; justify-content:center; padding:20px; }
+  .mask.show { display:flex; }
+  .modal { background:#fff; border-radius:14px; padding:20px; width:100%; max-width:420px; max-height:82vh; display:flex; flex-direction:column; }
+  .modal h2 { font-size:17px; margin-bottom:12px; text-align:center; }
+  .modal .body { flex:1; overflow-y:auto; font-size:13px; line-height:1.65; background:#f8f9fb; padding:12px; border-radius:8px; white-space:pre-wrap; font-family:inherit; }
+  .modal .acts { display:flex; gap:8px; margin-top:14px; }
+  .modal .acts button { flex:1; padding:12px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+  .m-ok { background:#00b42a; color:#fff; }
+  .m-copy { background:#eef2f8; color:#0066ff; }
+  .tip { font-size:12px; color:#8a9099; line-height:1.6; margin-top:10px; }
+  .offline { display:none; background:#fff7e8; border:1px solid #ffd591; color:#b76b00; padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:10px; line-height:1.5; }
+  .offline.show { display:block; }
+  .offline button { margin-top:6px; padding:5px 12px; border:1px solid #ffd591; background:#fff; color:#b76b00; border-radius:6px; font-size:12px; cursor:pointer; }
+  .done { font-size:12px; color:#00b42a; }
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>展厅晨检</h1>
-        <div class="date" id="currentDate"></div>
+
+<div class="header">
+  <h1>展厅晨检</h1>
+  <div class="date" id="today"></div>
+</div>
+
+<div class="offline" id="offlineBox">
+  <div id="offlineMsg"></div>
+  <button onclick="flushQueue()">立即重传</button>
+</div>
+
+<div class="card">
+  <div class="card-title">巡检员</div>
+  <input type="text" id="inspector" placeholder="请输入你的姓名" autocomplete="name">
+</div>
+
+<div id="list"></div>
+
+<button class="submit" id="submitBtn" onclick="submitForm()">提交巡检结果</button>
+<div class="tip">提交后数据会保存到云端，任何人都能在统计页看到。全部检查完才能提交。</div>
+
+<div class="mask" id="mask">
+  <div class="modal">
+    <h2 id="mTitle">提交成功</h2>
+    <div class="body" id="mBody"></div>
+    <div class="acts">
+      <button class="m-copy" onclick="copyReport()">复制文本</button>
+      <button class="m-ok" onclick="closeModal()">完成</button>
     </div>
+  </div>
+</div>
 
-    <div class="section">
-        <div class="section-title">巡检员</div>
-        <input type="text" id="inspectorInput" placeholder="请输入姓名" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;">
-    </div>
+<script>
+/* ============ 配置 ============ */
+var SB_URL = 'https://gtoqmmtzsshwqdhppkgg.supabase.co';
+var SB_KEY = 'sb_publishable_h3Thb_PYT_RcNIgvEuLXsg_DrKQPOTo';
+var TABLE  = 'inspections';
 
-    <div id="deviceList"></div>
+/* ============ 设备清单 ============ */
+var DEVICES = {
+  '屏幕': ['机械臂屏幕','全球化屏幕','魔方屏幕','研发屏幕','七大业务板块屏幕','解决方案屏幕','mini产线屏幕','堆垛机屏幕'],
+  '机器人': ['机器人产品'],
+  '家电': ['家电产品'],
+  '楼宇产品': ['楼宇产品'],
+  '医疗产品': ['医疗产品'],
+  '自动化产线': ['自动化产线'],
+  'AGV': ['AGV堆垛机']
+};
 
-    <button class="submit-btn" onclick="submitInspection()">提交巡检结果</button>
+var CONTACTS = {
+  '屏幕': '钟震 15813813807 / 李彬 13802246609',
+  '机器人': '郭永康 13128717140 / 陈铭章 18318893408',
+  '家电': '-',
+  '楼宇产品': '罗洁 13580121580',
+  '医疗产品': '赵工（微信）',
+  '自动化产线': '戴剑锋 18576083486',
+  'AGV': '刘泽均 13728578770'
+};
 
-    <div class="success-modal" id="successModal">
-        <div class="success-content" style="max-width:400px;max-height:80vh;overflow-y:auto;padding:24px;">
-            <div class="success-icon">&#10004;</div>
-            <div class="success-text">巡检结果已提交</div>
-            <div id="reportContent" style="text-align:left;font-size:13px;line-height:1.6;background:#f9f9f9;padding:12px;border-radius:8px;margin-bottom:16px;white-space:pre-wrap;"></div>
-            <button class="success-btn" onclick="copyReport()">复制总结</button>
-            <button class="success-btn" style="background:#52c41a;margin-left:8px;" onclick="closeModal()">确定</button>
-        </div>
-    </div>
+var state = {};
+var TOTAL = 0;
+for (var c in DEVICES) TOTAL += DEVICES[c].length;
 
-    <script>
-        var devices = {
-            "屏幕": ["机械臂屏幕", "全球化屏幕", "魔方屏幕", "研发屏幕", "七大业务板块屏幕", "解决方案屏幕", "mini产线屏幕", "堆垛机屏幕"],
-            "机器人": ["机器人产品"],
-            "家电": ["家电产品"],
-            "楼宇产品": ["楼宇产品"],
-            "医疗产品": ["医疗产品"],
-            "自动化产线": ["自动化产线"],
-            "AGV": ["AGV堆垛机"]
-        };
+/* ============ 初始化 ============ */
+(function init(){
+  var n = new Date();
+  document.getElementById('today').textContent =
+    n.getFullYear() + '年' + (n.getMonth()+1) + '月' + n.getDate() + '日 ' + weekName(n.getDay());
 
-        var contacts = {
-            "屏幕": "钟震 15813813807 / 李彬 13802246609",
-            "机器人": "郭永康 13128717140 / 陈铭章 18318893408",
-            "家电": "-",
-            "楼宇产品": "罗洁 13580121580",
-            "医疗产品": "赵工（微信）",
-            "自动化产线": "戴剑锋 18576083486",
-            "AGV": "刘泽均 13728578770"
-        };
+  var saved = localStorage.getItem('inspectorName');
+  if (saved) document.getElementById('inspector').value = saved;
 
-        function init() {
-            var now = new Date();
-            var dateStr = now.getFullYear() + "年" + (now.getMonth()+1) + "月" + now.getDate() + "日";
-            document.getElementById('currentDate').textContent = dateStr;
-            var container = document.getElementById('deviceList');
-            var html = '';
-            for (var category in devices) {
-                var items = devices[category];
-                html += '<div class="section"><div class="section-title">' + category + '</div>';
-                for (var i = 0; i < items.length; i++) {
-                    var item = items[i];
-                    var deviceId = (category + '_' + item).replace(/\s/g, '_');
-                    html += '<div class="device-row"><div class="device-name">' + item + '</div><div class="btn-group"><button class="btn btn-normal" onclick="setStatus(\'' + deviceId + '\', \'normal\', this)">正常</button><button class="btn btn-error" onclick="setStatus(\'' + deviceId + '\', \'error\', this)">异常</button></div></div><div class="error-input" id="input_' + deviceId + '"><textarea placeholder="请输入异常情况描述..." id="desc_' + deviceId + '"></textarea></div>';
-                }
-                html += '</div>';
-            }
-            container.innerHTML = html;
-        }
+  var html = '';
+  for (var cat in DEVICES) {
+    html += '<div class="card"><div class="card-title">' + cat +
+            '<span class="cnt" id="cnt_' + cat + '">0/' + DEVICES[cat].length + '</span></div>';
+    DEVICES[cat].forEach(function(item){
+      var id = cat + '_' + item;
+      html += '<div class="row">' +
+                '<div class="name">' + item + '</div>' +
+                '<div class="btns">' +
+                  '<button class="btn ok" data-id="' + id + '" data-s="normal" onclick="setS(this)">正常</button>' +
+                  '<button class="btn no" data-id="' + id + '" data-s="error" onclick="setS(this)">异常</button>' +
+                '</div>' +
+              '</div>' +
+              '<div class="desc" id="d_' + id + '"><textarea id="t_' + id + '" placeholder="请描述异常情况，例如：无法开机 / 屏幕黑屏 / 卡住不动"></textarea></div>';
+    });
+    html += '</div>';
+  }
+  document.getElementById('list').innerHTML = html;
+  checkQueue();
+})();
 
-        function setStatus(deviceId, status, btn) {
-            var btnGroup = btn.parentElement;
-            var btns = btnGroup.querySelectorAll('.btn');
-            for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('selected'); }
-            btn.classList.add('selected');
-            if (!window.inspectionData) window.inspectionData = {};
-            window.inspectionData[deviceId] = { status: status };
-            var inputDiv = document.getElementById('input_' + deviceId);
-            if (status === 'error') { inputDiv.classList.add('show'); } else { inputDiv.classList.remove('show'); }
-        }
+function weekName(d){ return '日一二三四五六'[d] === undefined ? '' : '周' + '日一二三四五六'[d]; }
 
-        function generateReport(data) {
-            var devs = data.devices;
-            var total = 0, normal = 0, error = 0;
-            var errorItems = [];
-            for (var deviceId in devs) {
-                var info = devs[deviceId];
-                total++;
-                var parts = deviceId.split('_');
-                var category = parts[0];
-                var name = parts.slice(1).join('_');
-                if (info.status === 'normal') { normal++; } else {
-                    error++;
-                    errorItems.push({ category: category, name: name, description: info.description || '', contact: contacts[category] || '-' });
-                }
-            }
-            var report = '📋 展厅晨检报表\n';
-            report += '📅 ' + data.date + ' ' + data.time + '\n';
-            report += '👤 巡检员：' + data.inspector + '\n\n';
-            if (error === 0) {
-                report += '✅ 全部正常（' + total + '个设备）';
-            } else {
-                report += '📊 设备状态：正常 ' + normal + ' / 异常 ' + error + '\n\n';
-                report += '⚠️ 异常设备：\n';
-                for (var i = 0; i < errorItems.length; i++) {
-                    var item = errorItems[i];
-                    report += '\n【' + item.name + '】\n';
-                    report += '  异常描述：' + item.description + '\n';
-                    report += '  联系人：' + item.contact + '\n';
-                }
-            }
-            return report;
-        }
+/* ============ 交互 ============ */
+function setS(btn){
+  var id = btn.dataset.id, s = btn.dataset.s;
+  var group = btn.parentElement.querySelectorAll('.btn');
+  for (var i=0;i<group.length;i++) group[i].classList.remove('on');
+  btn.classList.add('on');
+  state[id] = { status: s, description: '' };
+  var d = document.getElementById('d_' + id);
+  if (s === 'error') { d.classList.add('show'); document.getElementById('t_'+id).focus(); }
+  else { d.classList.remove('show'); }
 
-        function copyReport() {
-            var report = document.getElementById('reportContent').innerText;
-            navigator.clipboard.writeText(report).then(function() { alert('已复制到剪贴板'); }).catch(function() { alert('复制失败，请手动选择复制'); });
-        }
+  var cat = id.split('_')[0], done = 0;
+  for (var k in state) if (k.indexOf(cat + '_') === 0) done++;
+  var el = document.getElementById('cnt_' + cat);
+  if (el) el.textContent = done + '/' + DEVICES[cat].length;
+}
 
-        function submitInspection() {
-            var data = window.inspectionData || {};
-            var totalDevices = 0;
-            for (var cat in devices) { totalDevices += devices[cat].length; }
-            var checkedDevices = Object.keys(data).length;
-            if (checkedDevices < totalDevices) { alert('还有 ' + (totalDevices - checkedDevices) + ' 个设备未检查'); return; }
-            for (var deviceId in data) {
-                var info = data[deviceId];
-                if (info.status === 'error') {
-                    var desc = document.getElementById('desc_' + deviceId).value.trim();
-                    if (!desc) { alert('请填写所有异常设备的描述'); return; }
-                    info.description = desc;
-                }
-            }
-            var now = new Date();
-            var inspector = document.getElementById('inspectorInput').value.trim();
-            if (!inspector) { alert('请输入巡检员姓名'); return; }
-            var submitData = {
-                date: now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0'),
-                time: String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0'),
-                inspector: inspector,
-                devices: {}
-            };
-            for (var deviceId in data) {
-                submitData.devices[deviceId] = { status: data[deviceId].status, description: data[deviceId].description || '' };
-            }
-            var report = generateReport(submitData);
-            document.getElementById('reportContent').innerText = report;
-            document.getElementById('successModal').classList.add('show');
-        }
+/* ============ 提交 ============ */
+function submitForm(){
+  var inspector = document.getElementById('inspector').value.trim();
+  if (!inspector) { alert('请先填写巡检员姓名'); document.getElementById('inspector').focus(); return; }
 
-        function closeModal() {
-            document.getElementById('successModal').classList.remove('show');
-            window.inspectionData = {};
-            document.getElementById('inspectorInput').value = '';
-            var btns = document.querySelectorAll('.btn');
-            for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('selected'); }
-            var divs = document.querySelectorAll('.error-input');
-            for (var i = 0; i < divs.length; i++) { divs[i].classList.remove('show'); }
-            var texts = document.querySelectorAll('textarea');
-            for (var i = 0; i < texts.length; i++) { texts[i].value = ''; }
-        }
+  var checked = Object.keys(state).length;
+  if (checked < TOTAL) { alert('还有 ' + (TOTAL - checked) + ' 个设备未检查'); return; }
 
-        init();
-    </script>
+  for (var id in state) {
+    if (state[id].status === 'error') {
+      var ta = document.getElementById('t_' + id);
+      var v = ta ? ta.value.trim() : '';
+      if (!v) { alert('【' + id.split('_').slice(1).join('_') + '】标记为异常，请填写描述'); if(ta) ta.focus(); return; }
+      state[id].description = v;
+    }
+  }
+
+  var now = new Date();
+  var pad = function(x){ return String(x).padStart(2,'0'); };
+  var payload = {
+    date: now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()),
+    time: pad(now.getHours()) + ':' + pad(now.getMinutes()),
+    inspector: inspector,
+    devices: state
+  };
+
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '提交中...';
+  localStorage.setItem('inspectorName', inspector);
+
+  postData(payload).then(function(){
+    btn.disabled = false; btn.textContent = '提交巡检结果';
+    var report = buildReport(payload);
+    document.getElementById('mTitle').textContent = '提交成功';
+    document.getElementById('mBody').textContent = report;
+    document.getElementById('mask').classList.add('show');
+    window.__lastReport = report;
+  }).catch(function(err){
+    btn.disabled = false; btn.textContent = '提交巡检结果';
+    // 离线兜底
+    var q = JSON.parse(localStorage.getItem('pendingQueue') || '[]');
+    q.push(payload);
+    localStorage.setItem('pendingQueue', JSON.stringify(q));
+    alert('网络异常，数据已暂存在本机。\n回到有网络的页面会自动重传。\n\n错误：' + (err.message || err));
+    checkQueue();
+  });
+}
+
+function postData(p){
+  return fetch(SB_URL + '/rest/v1/' + TABLE, {
+    method: 'POST',
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(p)
+  }).then(function(r){
+    if (!r.ok) return r.text().then(function(t){ throw new Error(t); });
+    return true;
+  });
+}
+
+/* ============ 离线队列 ============ */
+function checkQueue(){
+  var q = JSON.parse(localStorage.getItem('pendingQueue') || '[]');
+  var box = document.getElementById('offlineBox');
+  if (q.length === 0) { box.classList.remove('show'); return; }
+  box.classList.add('show');
+  document.getElementById('offlineMsg').textContent = '⚠️ 有 ' + q.length + ' 条记录未上传成功（本机暂存）';
+  flushQueue();
+}
+
+function flushQueue(){
+  var q = JSON.parse(localStorage.getItem('pendingQueue') || '[]');
+  if (q.length === 0) { checkQueue(); return; }
+  var remaining = [];
+  var i = 0;
+  (function next(){
+    if (i >= q.length) {
+      localStorage.setItem('pendingQueue', JSON.stringify(remaining));
+      checkQueue();
+      if (remaining.length === 0 && q.length > 0) alert('已补传 ' + q.length + ' 条离线记录 ✅');
+      return;
+    }
+    postData(q[i]).then(function(){
+      i++; next();
+    }).catch(function(){
+      remaining.push(q[i]); i++; next();
+    });
+  })();
+}
+
+/* ============ 报表文本 ============ */
+function buildReport(d){
+  var normal = 0, errs = [];
+  for (var id in d.devices) {
+    var info = d.devices[id];
+    if (info.status === 'normal') normal++;
+    else errs.push({
+      cat: id.split('_')[0],
+      name: id.split('_').slice(1).join('_'),
+      desc: info.description
+    });
+  }
+  var s = '📋 展厅晨检报表\n';
+  s += '📅 ' + d.date + ' ' + d.time + '\n';
+  s += '👤 巡检员：' + d.inspector + '\n\n';
+  if (errs.length === 0) {
+    s += '✅ 全部正常（' + TOTAL + '个设备）';
+  } else {
+    s += '📊 设备状态：正常 ' + normal + ' / 异常 ' + errs.length + '\n\n⚠️ 异常设备：\n';
+    errs.forEach(function(e){
+      s += '\n【' + e.name + '】\n  异常描述：' + e.desc + '\n  联系人：' + (CONTACTS[e.cat] || '-') + '\n';
+    });
+  }
+  return s;
+}
+
+function copyReport(){
+  var t = window.__lastReport || document.getElementById('mBody').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(function(){ alert('已复制'); })
+      .catch(function(){ fallbackCopy(t); });
+  } else fallbackCopy(t);
+}
+
+function fallbackCopy(t){
+  var ta = document.createElement('textarea');
+  ta.value = t; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); alert('已复制'); } catch(e) { alert('复制失败，请手动选择'); }
+  document.body.removeChild(ta);
+}
+
+function closeModal(){
+  document.getElementById('mask').classList.remove('show');
+  // 重置
+  window.inspectionData = {};
+  state = {};
+  var btns = document.querySelectorAll('.btn');
+  for (var i=0;i<btns.length;i++) btns[i].classList.remove('on');
+  var ds = document.querySelectorAll('.desc');
+  for (var j=0;j<ds.length;j++) ds[j].classList.remove('show');
+  var ts = document.querySelectorAll('textarea');
+  for (var k=0;k<ts.length;k++) ts[k].value = '';
+  var cs = document.querySelectorAll('.cnt');
+  for (var m=0;m<cs.length;m++){
+    var cat = cs[m].id.replace('cnt_','');
+    cs[m].textContent = '0/' + DEVICES[cat].length;
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
 </body>
 </html>
