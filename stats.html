@@ -1,163 +1,322 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>展厅晨检 - 统计报表</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; padding: 16px; min-height: 100vh; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { font-size: 20px; color: #333; margin-bottom: 8px; }
-        .nav { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
-        .nav a { padding: 8px 20px; background: white; border-radius: 20px; text-decoration: none; color: #1890ff; font-size: 14px; border: 1px solid #1890ff; }
-        .nav a.active { background: #1890ff; color: white; }
-        .section { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .section-title { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
-        .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-        .filter-bar select, .filter-bar input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-        .filter-bar button { padding: 8px 20px; background: #1890ff; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-        .stat-card { background: #f6ffed; border-radius: 8px; padding: 16px; text-align: center; }
-        .stat-card.error { background: #fff2f0; }
-        .stat-card .number { font-size: 32px; font-weight: 700; color: #333; }
-        .stat-card .label { font-size: 13px; color: #666; margin-top: 4px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
-        th { background: #fafafa; font-weight: 600; color: #666; }
-        .error-count { color: #ff4d4f; font-weight: 600; }
-        .normal-count { color: #52c41a; font-weight: 600; }
-        .empty { text-align: center; padding: 40px; color: #999; }
-        .export-btn { padding: 8px 20px; background: #52c41a; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; margin-left: 12px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>展厅晨检 - 汇总统计</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; background:#f2f4f7; padding:14px; color:#1f2329; }
+  .wrap { max-width:1100px; margin:0 auto; }
+  .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+  h1 { font-size:20px; font-weight:600; }
+  .nav { display:flex; gap:8px; font-size:13px; }
+  .nav a { color:#0066ff; text-decoration:none; padding:6px 12px; background:#fff; border-radius:8px; border:1px solid #dfe2e7; }
+  .bar { background:#fff; border-radius:10px; padding:12px 14px; margin-bottom:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  select, input[type=date] { padding:8px 10px; border:1px solid #dfe2e7; border-radius:7px; font-size:13px; outline:none; background:#fff; }
+  button { padding:8px 16px; border:none; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; background:#0066ff; color:#fff; }
+  button.ghost { background:#eef2f8; color:#0066ff; }
+  button:disabled { background:#c9cdd4; cursor:not-allowed; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:12px; }
+  .stat { background:#fff; border-radius:10px; padding:14px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .stat .k { font-size:12px; color:#8a9099; margin-bottom:6px; }
+  .stat .v { font-size:24px; font-weight:600; }
+  .stat .v.err { color:#f53f3f; }
+  .stat .v.ok { color:#00b42a; }
+  .panel { background:#fff; border-radius:10px; padding:14px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .panel h2 { font-size:15px; font-weight:600; margin-bottom:12px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { padding:9px 10px; text-align:left; border-bottom:1px solid #f0f2f5; }
+  th { background:#fafbfc; font-weight:600; color:#5a6270; font-size:12px; white-space:nowrap; }
+  tr:hover td { background:#fafbfc; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:500; }
+  .pill.ok { background:#e8ffea; color:#00b42a; }
+  .pill.err { background:#ffece8; color:#f53f3f; }
+  .empty { text-align:center; padding:36px; color:#8a9099; font-size:14px; }
+  .errlist { font-size:13px; line-height:1.8; }
+  .errlist .item { padding:8px 0; border-bottom:1px dashed #eef0f3; }
+  .errlist .item:last-child { border-bottom:none; }
+  .errlist .nm { font-weight:600; }
+  .errlist .ds { color:#f53f3f; }
+  .errlist .ct { color:#8a9099; font-size:12px; }
+  .loading { text-align:center; padding:30px; color:#8a9099; font-size:13px; }
+  .health { font-size:12px; padding:8px 12px; border-radius:8px; margin-bottom:12px; display:none; }
+  .health.warn { display:block; background:#fff7e8; border:1px solid #ffd591; color:#b76b00; line-height:1.6; }
+  .health.bad { display:block; background:#ffece8; border:1px solid #ffb3a7; color:#f53f3f; line-height:1.6; }
+</style>
 </head>
 <body>
-    <div class="header"><h1>展厅晨检 - 统计报表</h1></div>
+<div class="wrap">
+
+  <div class="top">
+    <h1>展厅晨检 · 汇总统计</h1>
     <div class="nav">
-        <a href="index.html">巡检</a>
-        <a href="stats.html" class="active">统计</a>
+      <a href="./index.html">← 巡检页</a>
     </div>
+  </div>
 
-    <div class="section">
-        <div class="section-title">筛选条件</div>
-        <div class="filter-bar">
-            <select id="periodFilter">
-                <option value="week">最近一周</option>
-                <option value="month">最近一个月</option>
-                <option value="all">全部</option>
-            </select>
-            <button onclick="loadStats()">查询</button>
-            <button class="export-btn" onclick="exportCSV()">导出 CSV</button>
-        </div>
+  <div class="health" id="health"></div>
+
+  <div class="bar">
+    <select id="period" onchange="onPeriod()">
+      <option value="today">今天</option>
+      <option value="week" selected>最近 7 天</option>
+      <option value="month">最近 30 天</option>
+      <option value="all">全部</option>
+      <option value="custom">自定义</option>
+    </select>
+    <input type="date" id="start" style="display:none">
+    <input type="date" id="end" style="display:none">
+    <button onclick="load()">查询</button>
+    <button class="ghost" onclick="exportCSV()">导出 CSV</button>
+    <button class="ghost" onclick="copySummary()">复制文字汇总</button>
+    <span style="font-size:12px;color:#8a9099;margin-left:auto" id="meta"></span>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="k">巡检次数</div><div class="v" id="sCount">-</div></div>
+    <div class="stat"><div class="k">参与人数</div><div class="v" id="sPeople">-</div></div>
+    <div class="stat"><div class="k">设备检查项</div><div class="v" id="sChecks">-</div></div>
+    <div class="stat"><div class="k">正常</div><div class="v ok" id="sOk">-</div></div>
+    <div class="stat"><div class="k">异常</div><div class="v err" id="sErr">-</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>异常设备汇总</h2>
+    <div id="errBox"><div class="empty">暂无数据</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>巡检记录明细</h2>
+    <div style="overflow-x:auto">
+      <div id="tableBox"><div class="empty">暂无数据</div></div>
     </div>
+  </div>
 
-    <div id="statsContent"><div class="empty">加载中...</div></div>
+</div>
 
-    <script>
-        const devices = {
-            "屏幕": ["机械臂屏幕", "全球化屏幕", "魔方屏幕", "研发屏幕", "七大业务板块屏幕", "解决方案屏幕", "mini 产线屏幕", "堆垛机屏幕"],
-            "机器人": ["机器人产品"],
-            "家电": ["家电产品"],
-            "楼宇产品": ["楼宇产品"],
-            "医疗产品": ["医疗产品"],
-            "自动化产线": ["自动化产线"],
-            "AGV\\堆垛机": ["AGV\\堆垛机"]
-        };
+<script>
+var SB_URL = 'https://gtoqmmtzsshwqdhppkgg.supabase.co';
+var SB_KEY = 'sb_publishable_h3Thb_PYT_RcNIgvEuLXsg_DrKQPOTo';
 
-        function loadStats() {
-            const period = document.getElementById('periodFilter').value;
-            const records = JSON.parse(localStorage.getItem('inspectionRecords') || '[]');
-            const now = new Date();
-            let filtered = records;
+var CONTACTS = {
+  '屏幕':'钟震 15813813807 / 李彬 13802246609',
+  '机器人':'郭永康 13128717140 / 陈铭章 18318893408',
+  '家电':'-',
+  '楼宇产品':'罗洁 13580121580',
+  '医疗产品':'赵工（微信）',
+  '自动化产线':'戴剑锋 18576083486',
+  'AGV':'刘泽均 13728578770'
+};
 
-            if (period === 'week') {
-                const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                filtered = records.filter(r => r.date >= weekAgo);
-            } else if (period === 'month') {
-                const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                filtered = records.filter(r => r.date >= monthAgo);
-            }
+var DATA = [];
 
-            if (filtered.length === 0) {
-                document.getElementById('statsContent').innerHTML = '<div class="empty">暂无数据</div>';
-                return;
-            }
+function pad(x){ return String(x).padStart(2,'0'); }
+function ymd(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
 
-            const totalInspections = filtered.length;
-            let totalDevices = 0, errorDevices = 0;
-            const deviceErrorCount = {};
+function onPeriod(){
+  var p = document.getElementById('period').value;
+  var show = p === 'custom';
+  document.getElementById('start').style.display = show ? '' : 'none';
+  document.getElementById('end').style.display = show ? '' : 'none';
+  if (show) {
+    var e = new Date(), s = new Date(Date.now() - 6*864e5);
+    if (!document.getElementById('start').value) document.getElementById('start').value = ymd(s);
+    if (!document.getElementById('end').value) document.getElementById('end').value = ymd(e);
+  } else {
+    load();
+  }
+}
 
-            filtered.forEach(record => {
-                for (const [deviceId, info] of Object.entries(record.devices)) {
-                    totalDevices++;
-                    if (info.status === 'error') {
-                        errorDevices++;
-                        const parts = deviceId.split('_');
-                        const name = parts.slice(1).join('_').replace(/_/g, ' ');
-                        const category = parts[0];
-                        const key = `${category}-${name}`;
-                        if (!deviceErrorCount[key]) deviceErrorCount[key] = { category, name, count: 0, descriptions: [] };
-                        deviceErrorCount[key].count++;
-                        if (info.description) deviceErrorCount[key].descriptions.push(info.description);
-                    }
-                }
-            });
+function range(){
+  var p = document.getElementById('period').value;
+  var now = new Date();
+  if (p === 'today') return [ymd(now), ymd(now)];
+  if (p === 'week')  return [ymd(new Date(Date.now() - 6*864e5)), ymd(now)];
+  if (p === 'month') return [ymd(new Date(Date.now() - 29*864e5)), ymd(now)];
+  if (p === 'all')   return [null, null];
+  return [document.getElementById('start').value, document.getElementById('end').value];
+}
 
-            const normalDevices = totalDevices - errorDevices;
-            const errorRanking = Object.values(deviceErrorCount).sort((a, b) => b.count - a.count);
+function api(path){
+  return fetch(SB_URL + '/rest/v1/' + path, {
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+  }).then(function(r){
+    if (!r.ok) return r.text().then(function(t){ throw new Error(t); });
+    return r.json();
+  });
+}
 
-            let html = `<div class="section"><div class="section-title">概览</div><div class="stats-grid">`;
-            html += `<div class="stat-card"><div class="number">${totalInspections}</div><div class="label">巡检次数</div></div>`;
-            html += `<div class="stat-card"><div class="number">${totalDevices}</div><div class="label">检查设备数</div></div>`;
-            html += `<div class="stat-card"><div class="number normal-count">${normalDevices}</div><div class="label">正常设备</div></div>`;
-            html += `<div class="stat-card error"><div class="number error-count">${errorDevices}</div><div class="label">异常设备</div></div>`;
-            html += `</div></div>`;
+function load(){
+  var rg = range(), s = rg[0], e = rg[1];
+  var q = 'inspections?select=id,date,time,inspector,devices,created_at&order=date.desc,time.desc';
+  if (s) q += '&date=gte.' + s;
+  if (e) q += '&date=lte.' + e;
 
-            if (errorRanking.length > 0) {
-                html += `<div class="section"><div class="section-title">设备异常排行</div><table>`;
-                html += `<tr><th>排名</th><th>设备</th><th>类别</th><th>异常次数</th><th>常见问题</th></tr>`;
-                errorRanking.forEach((item, index) => {
-                    const desc = item.descriptions.length > 0 ? item.descriptions[0].substring(0, 30) + (item.descriptions[0].length > 30 ? '...' : '') : '-';
-                    html += `<tr><td>${index + 1}</td><td>${item.name}</td><td>${item.category}</td><td class="error-count">${item.count}</td><td>${desc}</td></tr>`;
-                });
-                html += `</table></div>`;
-            } else {
-                html += `<div class="section"><div class="section-title">设备异常排行</div><div class="empty">🎉 所有设备均正常</div></div>`;
-            }
+  document.getElementById('tableBox').innerHTML = '<div class="loading">加载中...</div>';
+  document.getElementById('meta').textContent = '';
 
-            html += `<div class="section"><div class="section-title">巡检记录</div><table>`;
-            html += `<tr><th>日期</th><th>时间</th><th>巡检员</th><th>异常数</th></tr>`;
-            filtered.sort((a, b) => b.date.localeCompare(a.date)).forEach(record => {
-                const errorCount = Object.values(record.devices).filter(d => d.status === 'error').length;
-                html += `<tr><td>${record.date}</td><td>${record.time}</td><td>${record.inspector}</td><td class="${errorCount > 0 ? 'error-count' : 'normal-count'}">${errorCount}</td></tr>`;
-            });
-            html += `</table></div>`;
+  api(q).then(function(rows){
+    DATA = rows || [];
+    render(rg);
+    document.getElementById('health').className = 'health';
+    if (DATA.length === 0) {
+      var lastSeen = localStorage.getItem('lastDataDate');
+      document.getElementById('health').className = 'health warn';
+      document.getElementById('health').textContent = '⚠️ 当前范围内没有巡检记录。若你确定已有人提交，请检查是否日期筛选过窄。' +
+        (lastSeen ? '（本机记录上次看到数据：' + lastSeen + '）' : '');
+    } else {
+      localStorage.setItem('lastDataDate', DATA[0].date);
+    }
+  }).catch(function(err){
+    document.getElementById('tableBox').innerHTML = '<div class="empty">加载失败：' + (err.message || err) + '</div>';
+    document.getElementById('health').className = 'health bad';
+    document.getElementById('health').textContent = '❌ 读取数据库失败。可能是 Supabase 项目被暂停（免费版连续 7 天无活动会自动暂停，需登录后台唤醒）。';
+  });
+}
 
-            document.getElementById('statsContent').innerHTML = html;
-        }
+function render(rg){
+  if (DATA.length === 0) {
+    document.getElementById('sCount').textContent = '0';
+    document.getElementById('sPeople').textContent = '0';
+    document.getElementById('sChecks').textContent = '0';
+    document.getElementById('sOk').textContent = '0';
+    document.getElementById('sErr').textContent = '0';
+    document.getElementById('errBox').innerHTML = '<div class="empty">暂无数据</div>';
+    document.getElementById('tableBox').innerHTML = '<div class="empty">暂无数据</div>';
+    return;
+  }
 
-        function exportCSV() {
-            const records = JSON.parse(localStorage.getItem('inspectionRecords') || '[]');
-            if (records.length === 0) { alert('没有数据可导出'); return; }
+  var people = {}, totalChecks = 0, okCnt = 0, errCnt = 0;
+  var errMap = {};
 
-            let csv = '\uFEFF 日期，时间，巡检员，设备类别，设备名称，状态，异常描述\n';
-            records.forEach(record => {
-                for (const [deviceId, info] of Object.entries(record.devices)) {
-                    const parts = deviceId.split('_');
-                    const category = parts[0];
-                    const name = parts.slice(1).join('_').replace(/_/g, ' ');
-                    csv += `${record.date},${record.time},${record.inspector},${category},${name},${info.status === 'normal' ? '正常' : '异常'},"${info.description || ''}"\n`;
-                }
-            });
+  DATA.forEach(function(r){
+    people[r.inspector] = 1;
+    var dv = r.devices || {};
+    for (var id in dv) {
+      var info = dv[id];
+      totalChecks++;
+      if (info.status === 'normal') okCnt++;
+      else {
+        errCnt++;
+        if (!errMap[id]) errMap[id] = { name: id.split('_').slice(1).join('_'), cat: id.split('_')[0], count:0, descs:[], last:'' };
+        errMap[id].count++;
+        if (info.description) errMap[id].descs.push(info.description);
+        errMap[id].last = r.date + ' ' + (r.time || '');
+      }
+    }
+  });
 
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `展厅晨检数据_${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
-        }
+  document.getElementById('sCount').textContent = DATA.length;
+  document.getElementById('sPeople').textContent = Object.keys(people).length;
+  document.getElementById('sChecks').textContent = totalChecks;
+  document.getElementById('sOk').textContent = okCnt;
+  document.getElementById('sErr').textContent = errCnt;
 
-        loadStats();
-    </script>
+  var rng = (rg[0] && rg[1]) ? (rg[0] + ' ~ ' + rg[1]) : '全部';
+  document.getElementById('meta').textContent = rng + ' · ' + DATA.length + ' 条记录';
+
+  // 异常汇总
+  var keys = Object.keys(errMap).sort(function(a,b){ return errMap[b].count - errMap[a].count; });
+  if (keys.length === 0) {
+    document.getElementById('errBox').innerHTML = '<div style="padding:12px;color:#00b42a;font-size:14px">✅ 全部设备正常，无异常记录</div>';
+  } else {
+    var h = '<div class="errlist">';
+    keys.forEach(function(id){
+      var e = errMap[id];
+      var uniq = e.descs.filter(function(v,i,a){ return a.indexOf(v) === i; }).slice(0,3);
+      h += '<div class="item">' +
+             '<div class="nm">' + e.name + ' <span class="pill err">' + e.count + ' 次</span></div>' +
+             '<div class="ds">' + (uniq.join('；') || '（未填写描述）') + '</div>' +
+             '<div class="ct">最近：' + e.last + ' · 联系人：' + (CONTACTS[e.cat] || '-') + '</div>' +
+           '</div>';
+    });
+    h += '</div>';
+    document.getElementById('errBox').innerHTML = h;
+  }
+
+  // 明细表
+  var t = '<table><thead><tr><th>日期</th><th>时间</th><th>巡检员</th><th>正常</th><th>异常</th><th>异常详情</th></tr></thead><tbody>';
+  DATA.forEach(function(r){
+    var dv = r.devices || {}, ok = 0, errs = [];
+    for (var id in dv) {
+      if (dv[id].status === 'normal') ok++;
+      else errs.push(id.split('_').slice(1).join('_') + (dv[id].description ? '（' + dv[id].description + '）' : ''));
+    }
+    t += '<tr>' +
+           '<td>' + r.date + '</td>' +
+           '<td>' + (r.time || '-') + '</td>' +
+           '<td>' + r.inspector + '</td>' +
+           '<td><span class="pill ok">' + ok + '</span></td>' +
+           '<td>' + (errs.length ? '<span class="pill err">' + errs.length + '</span>' : '0') + '</td>' +
+           '<td style="font-size:12px;color:#5a6270">' + (errs.length ? errs.join('；') : '-') + '</td>' +
+         '</tr>';
+  });
+  t += '</tbody></table>';
+  document.getElementById('tableBox').innerHTML = t;
+}
+
+function exportCSV(){
+  if (DATA.length === 0) { alert('当前范围没有数据'); return; }
+  var csv = '\uFEFF日期,时间,巡检员,设备类别,设备名称,状态,异常描述\n';
+  DATA.forEach(function(r){
+    var dv = r.devices || {};
+    for (var id in dv) {
+      var p = id.split('_');
+      csv += [r.date, r.time || '', r.inspector, p[0], p.slice(1).join('_'),
+              dv[id].status === 'normal' ? '正常' : '异常',
+              '"' + (dv[id].description || '').replace(/"/g,'""') + '"'].join(',') + '\n';
+    }
+  });
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '展厅晨检_' + ymd(new Date()) + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copySummary(){
+  if (DATA.length === 0) { alert('当前范围没有数据'); return; }
+  var rg = range();
+  var people = {}, errCnt = 0, okCnt = 0, errs = {};
+  DATA.forEach(function(r){
+    people[r.inspector] = 1;
+    var dv = r.devices || {};
+    for (var id in dv) {
+      if (dv[id].status === 'normal') okCnt++;
+      else {
+        errCnt++;
+        var nm = id.split('_').slice(1).join('_');
+        errs[nm] = errs[nm] || { c:0, d:[] };
+        errs[nm].c++;
+        if (dv[id].description) errs[nm].d.push(dv[id].description);
+      }
+    }
+  });
+
+  var s = '📋 展厅晨检周报\n';
+  s += '📅 ' + ((rg[0] && rg[1]) ? rg[0] + ' ~ ' + rg[1] : '全部期间') + '\n';
+  s += '👥 巡检 ' + DATA.length + ' 次 / ' + Object.keys(people).length + ' 人\n';
+  s += '📊 设备检查 ' + (okCnt + errCnt) + ' 项：正常 ' + okCnt + ' / 异常 ' + errCnt + '\n';
+  if (errCnt === 0) {
+    s += '\n✅ 全部设备正常';
+  } else {
+    s += '\n⚠️ 异常汇总：\n';
+    Object.keys(errs).sort(function(a,b){ return errs[b].c - errs[a].c; }).forEach(function(nm){
+      var e = errs[nm];
+      var uniq = e.d.filter(function(v,i,a){ return a.indexOf(v)===i; }).slice(0,2);
+      s += '\n【' + nm + '】' + e.c + ' 次\n  ' + (uniq.join('；') || '未填描述') + '\n';
+    });
+  }
+  var txt = s;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(function(){ alert('已复制，可直接粘贴到美信群'); })
+      .catch(function(){ prompt('请手动复制：', txt); });
+  } else prompt('请手动复制：', txt);
+}
+
+onPeriod();
+</script>
 </body>
 </html>
